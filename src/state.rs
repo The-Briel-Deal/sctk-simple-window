@@ -3,6 +3,8 @@ pub mod output;
 pub mod shm;
 pub mod window;
 
+use core::panic;
+
 use smithay_client_toolkit::{
     compositor::CompositorState,
     delegate_compositor, delegate_registry,
@@ -16,7 +18,10 @@ use smithay_client_toolkit::{
         },
         WaylandSurface,
     },
-    shm::{slot::Buffer, Shm},
+    shm::{
+        slot::{Buffer, SlotPool},
+        Shm,
+    },
 };
 use wayland_client::{
     globals::{registry_queue_init, GlobalList},
@@ -32,6 +37,7 @@ pub struct GfState {
 
     xdg_shell: XdgShell,
     shm: Shm,
+    pool: Option<SlotPool>,
     window: Option<Window>,
     buffer: Option<Buffer>,
 
@@ -60,6 +66,7 @@ impl GfState {
                 Ok(xdg_shell) => xdg_shell,
                 Err(err) => panic!("Failed to bind XdgShell.\nErr: {err} "),
             },
+            pool: None,
             window: None,
             buffer: None,
 
@@ -76,17 +83,34 @@ impl GfState {
         ));
         let window = self.window.as_ref().expect("Created directly above.");
 
+        self.pool = Some(SlotPool::new(256 * 256 * 4, &self.shm).expect("Failed to create pool."));
+
         window.set_title(title);
         window.set_app_id(app_id);
         window.set_min_size(Some(min_size));
 
         window.commit();
     }
-    pub fn get_compositor_state(&self) -> &CompositorState {
+    pub fn compositor_state(&self) -> &CompositorState {
         &self.compositor_state
     }
-    pub fn get_xdg_shell(&self) -> &XdgShell {
+    pub fn xdg_shell(&self) -> &XdgShell {
         &self.xdg_shell
+    }
+    pub fn slot_pool(&mut self) -> &mut SlotPool {
+        match self.pool.as_mut() {
+            Some(pool) => pool,
+            None => panic!("No slot pool in state. Have you called `init_window()`?"),
+        }
+    }
+    pub fn window(&self) -> &Window {
+        match self.window.as_ref() {
+            Some(window) => window,
+            None => panic!("No window in state. Have you called `init_window()`?")
+
+
+        }
+
     }
 }
 

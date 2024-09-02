@@ -1,10 +1,11 @@
 pub mod compositor;
 pub mod output;
+pub mod shm;
 pub mod window;
 
 use smithay_client_toolkit::{
     compositor::CompositorState,
-    delegate_compositor, delegate_registry, delegate_shm,
+    delegate_compositor, delegate_registry,
     output::OutputState,
     registry::{self, ProvidesRegistryState, RegistryState},
     registry_handlers,
@@ -15,7 +16,7 @@ use smithay_client_toolkit::{
         },
         WaylandSurface,
     },
-    shm::{slot::Buffer, Shm, ShmHandler},
+    shm::{slot::Buffer, Shm},
 };
 use wayland_client::{
     globals::{registry_queue_init, GlobalList},
@@ -74,6 +75,7 @@ impl GfState {
             &self.queue_handle,
         ));
         let window = self.window.as_ref().expect("Created directly above.");
+
         window.set_title(title);
         window.set_app_id(app_id);
         window.set_min_size(Some(min_size));
@@ -90,14 +92,6 @@ impl GfState {
 
 delegate_registry!(GfState);
 delegate_compositor!(GfState);
-
-// Move to shm file
-delegate_shm!(GfState);
-impl ShmHandler for GfState {
-    fn shm_state(&mut self) -> &mut Shm {
-        &mut self.shm
-    }
-}
 
 impl ProvidesRegistryState for GfState {
     fn registry(&mut self) -> &mut registry::RegistryState {

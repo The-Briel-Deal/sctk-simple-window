@@ -2,9 +2,11 @@ use std::time::Duration;
 
 use sctk_simple_window::state::{get_globals, GfState};
 use smithay_client_toolkit::{
-    compositor::CompositorState,
     reexports::{calloop::EventLoop, calloop_wayland_source::WaylandSource},
-    shell::{xdg::{window::WindowDecorations, XdgShell}, WaylandSurface},
+    shell::{
+        xdg::{window::WindowDecorations, XdgShell},
+        WaylandSurface,
+    },
 };
 use wayland_client::Connection;
 
@@ -31,18 +33,10 @@ fn main() {
 
     let mut gf_state = GfState::new(&global_list, &qh);
 
-    let compositor = match CompositorState::bind(&global_list, &qh) {
-        Ok(compositor) => compositor,
-        Err(err) => panic!("Failed to bind compositor.\nErr: {err}"),
-    };
-
-    let xdg_shell = match XdgShell::bind(&global_list, &qh) {
-        Ok(xdg_shell) => xdg_shell,
-        Err(err) => panic!("Failed to bind XdgShell.\nErr: {err} "),
-    };
-
-    let wl_surface = compositor.create_surface(&qh);
-    let window = xdg_shell.create_window(wl_surface, WindowDecorations::None, &qh);
+    let wl_surface = gf_state.get_compositor_state().create_surface(&qh);
+    let window = gf_state
+        .get_xdg_shell()
+        .create_window(wl_surface, WindowDecorations::None, &qh);
 
     window.set_title("I'm a silly window");
     window.set_app_id("gabriels-silly-window");

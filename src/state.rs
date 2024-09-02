@@ -3,11 +3,13 @@ pub mod output;
 pub mod window;
 
 use smithay_client_toolkit::{
-    delegate_compositor, delegate_registry,
+    compositor::CompositorState,
+    delegate_compositor, delegate_registry, delegate_shm,
     output::OutputState,
     registry::{self, ProvidesRegistryState, RegistryState},
     registry_handlers,
-    shm::slot::Buffer,
+    shell::xdg::XdgShell,
+    shm::{slot::Buffer, Shm, ShmHandler},
 };
 use wayland_client::{
     globals::{registry_queue_init, GlobalList},
@@ -15,13 +17,17 @@ use wayland_client::{
 };
 
 pub struct GfState {
-    pub registry_state: RegistryState,
-    pub output_state: OutputState,
+    registry_state: RegistryState,
+    output_state: OutputState,
+    compositor_state: CompositorState,
+
+    xdg_shell: XdgShell,
+    shm: Shm,
     buffer: Option<Buffer>,
-    width: u32,
-    height: u32,
 
     first_configure: bool,
+    width: u32,
+    height: u32,
 }
 
 impl GfState {
@@ -29,15 +35,44 @@ impl GfState {
         GfState {
             registry_state: RegistryState::new(global_list),
             output_state: OutputState::new(global_list, qh),
+            compositor_state: match CompositorState::bind(global_list, qh) {
+                Ok(compositor) => compositor,
+                Err(err) => panic!("Failed to bind compositor.\nErr: {err}"),
+            },
+
+            xdg_shell: match XdgShell::bind(global_list, qh) {
+                Ok(xdg_shell) => xdg_shell,
+                Err(err) => panic!("Failed to bind XdgShell.\nErr: {err} "),
+            },
+            shm: match Shm::bind(global_list, qh) {
+                Ok(xdg_shell) => xdg_shell,
+                Err(err) => panic!("Failed to bind XdgShell.\nErr: {err} "),
+            },
+            buffer: None,
+
             first_configure: true,
             height: 256,
             width: 256,
-            buffer: None,
         }
     }
+    pub fn get_compositor_state(&self) -> &CompositorState {
+        &self.compositor_state
+    }
+    pub fn get_xdg_shell(&self) -> &XdgShell {
+        &self.xdg_shell
+    }
 }
+
 delegate_registry!(GfState);
 delegate_compositor!(GfState);
+
+// Move to shm file
+delegate_shm!(GfState);
+impl ShmHandler for GfState {
+    fn shm_state(&mut self) -> &mut Shm {
+        &mut self.shm
+    }
+}
 
 impl ProvidesRegistryState for GfState {
     fn registry(&mut self) -> &mut registry::RegistryState {

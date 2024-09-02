@@ -3,24 +3,41 @@ pub mod output;
 pub mod window;
 
 use smithay_client_toolkit::{
-    delegate_compositor, delegate_output, delegate_registry, delegate_xdg_shell,
+    delegate_compositor, delegate_registry,
     output::OutputState,
     registry::{self, ProvidesRegistryState, RegistryState},
     registry_handlers,
+    shm::slot::Buffer,
 };
 use wayland_client::{
     globals::{registry_queue_init, GlobalList},
-    Connection, EventQueue,
+    Connection, EventQueue, QueueHandle,
 };
 
 pub struct GfState {
     pub registry_state: RegistryState,
     pub output_state: OutputState,
+    buffer: Option<Buffer>,
+    width: u32,
+    height: u32,
+
+    first_configure: bool,
+}
+
+impl GfState {
+    pub fn new(global_list: &GlobalList, qh: &QueueHandle<Self>) -> Self {
+        GfState {
+            registry_state: RegistryState::new(global_list),
+            output_state: OutputState::new(global_list, qh),
+            first_configure: true,
+            height: 256,
+            width: 256,
+            buffer: None,
+        }
+    }
 }
 delegate_registry!(GfState);
-delegate_output!(GfState);
 delegate_compositor!(GfState);
-delegate_xdg_shell!(GfState);
 
 impl ProvidesRegistryState for GfState {
     fn registry(&mut self) -> &mut registry::RegistryState {

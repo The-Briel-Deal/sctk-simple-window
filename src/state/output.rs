@@ -1,8 +1,9 @@
-use smithay_client_toolkit::output::{OutputHandler, OutputState};
+use smithay_client_toolkit::{delegate_output, output::{OutputHandler, OutputState}};
 use wayland_client::Connection;
 
 use super::GfState;
 
+delegate_output!(GfState);
 
 impl OutputHandler for GfState {
     fn output_state(&mut self) -> &mut OutputState {

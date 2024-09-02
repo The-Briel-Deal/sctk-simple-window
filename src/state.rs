@@ -8,7 +8,13 @@ use smithay_client_toolkit::{
     output::OutputState,
     registry::{self, ProvidesRegistryState, RegistryState},
     registry_handlers,
-    shell::xdg::XdgShell,
+    shell::{
+        xdg::{
+            window::{Window, WindowDecorations},
+            XdgShell,
+        },
+        WaylandSurface,
+    },
     shm::{slot::Buffer, Shm, ShmHandler},
 };
 use wayland_client::{
@@ -17,12 +23,15 @@ use wayland_client::{
 };
 
 pub struct GfState {
+    queue_handle: QueueHandle<Self>,
+
     registry_state: RegistryState,
     output_state: OutputState,
     compositor_state: CompositorState,
 
     xdg_shell: XdgShell,
     shm: Shm,
+    window: Option<Window>,
     buffer: Option<Buffer>,
 
     first_configure: bool,
@@ -33,6 +42,8 @@ pub struct GfState {
 impl GfState {
     pub fn new(global_list: &GlobalList, qh: &QueueHandle<Self>) -> Self {
         GfState {
+            queue_handle: qh.clone(),
+
             registry_state: RegistryState::new(global_list),
             output_state: OutputState::new(global_list, qh),
             compositor_state: match CompositorState::bind(global_list, qh) {
@@ -48,12 +59,26 @@ impl GfState {
                 Ok(xdg_shell) => xdg_shell,
                 Err(err) => panic!("Failed to bind XdgShell.\nErr: {err} "),
             },
+            window: None,
             buffer: None,
 
             first_configure: true,
             height: 256,
             width: 256,
         }
+    }
+    pub fn init_window(&mut self, title: &str, app_id: &str, min_size: (u32, u32)) {
+        self.window = Some(self.xdg_shell.create_window(
+            self.compositor_state.create_surface(&self.queue_handle),
+            WindowDecorations::None,
+            &self.queue_handle,
+        ));
+        let window = self.window.as_ref().expect("Created directly above.");
+        window.set_title(title);
+        window.set_app_id(app_id);
+        window.set_min_size(Some(min_size));
+
+        window.commit();
     }
     pub fn get_compositor_state(&self) -> &CompositorState {
         &self.compositor_state

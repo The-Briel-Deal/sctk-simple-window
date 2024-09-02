@@ -3,10 +3,7 @@ use std::time::Duration;
 use sctk_simple_window::state::{get_globals, GfState};
 use smithay_client_toolkit::{
     reexports::{calloop::EventLoop, calloop_wayland_source::WaylandSource},
-    shell::{
-        xdg::window::WindowDecorations,
-        WaylandSurface,
-    },
+    shell::{xdg::window::WindowDecorations, WaylandSurface},
 };
 use wayland_client::Connection;
 
@@ -32,18 +29,11 @@ fn main() {
         .unwrap();
 
     let mut gf_state = GfState::new(&global_list, &qh);
-
-    let wl_surface = gf_state.get_compositor_state().create_surface(&qh);
-    let window = gf_state
-        .get_xdg_shell()
-        .create_window(wl_surface, WindowDecorations::None, &qh);
-
-    window.set_title("I'm a silly window");
-    window.set_app_id("gabriels-silly-window");
-
-    window.set_min_size(Some((256, 256)));
-
-    window.commit();
+    gf_state.init_window(
+        "Gabriel's First Window (:",
+        "gabriel.loves.cute.dogs",
+        (256, 256),
+    );
 
     loop {
         match event_loop.dispatch(Duration::from_millis(16), &mut gf_state) {

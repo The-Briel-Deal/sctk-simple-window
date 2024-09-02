@@ -4,7 +4,7 @@ use sctk_simple_window::state::{get_globals, GfState};
 use smithay_client_toolkit::{
     reexports::{calloop::EventLoop, calloop_wayland_source::WaylandSource},
     shell::{
-        xdg::{window::WindowDecorations, XdgShell},
+        xdg::window::WindowDecorations,
         WaylandSurface,
     },
 };

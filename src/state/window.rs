@@ -1,3 +1,5 @@
+use std::{thread::sleep, time::Duration};
+
 use smithay_client_toolkit::{
     delegate_xdg_shell, delegate_xdg_window,
     shell::{xdg::window::WindowHandler, WaylandSurface},
@@ -53,12 +55,18 @@ impl GfState {
         let buffer = self.buffer.as_ref().expect("Set to Some above.");
         // TODO: Create a fallback for this.
         let canvas = pool.canvas(buffer).expect("Getting Canvas Failed.");
-        canvas.chunks_exact_mut(4).for_each(|chunk| {
-            chunk[0] = 0xFF;
-            chunk[1] = rand::random();
-            chunk[2] = 0xFF;
-            chunk[3] = 0xFF;
-        });
+
+        let rand_num: i64 = rand::random();
+        canvas
+            .chunks_exact_mut(4)
+            .enumerate()
+            .for_each(|(index, chunk)| {
+                let pix = (rand_num % (index + 1) as i64) % 255;
+                chunk[0] = 0xFF;
+                chunk[1] = pix as u8;
+                chunk[2] = 0xFF;
+                chunk[3] = 0xFF;
+            });
         buffer
             .attach_to(self.window().wl_surface())
             .expect("Attaching Buffer failed.");

@@ -13,6 +13,8 @@ impl CompositorHandler for GfState {
         _surface: &wayland_client::protocol::wl_surface::WlSurface,
         _time: u32,
     ) {
+        println!("Frame!!");
+        self.draw();
     }
     fn surface_enter(
         &mut self,

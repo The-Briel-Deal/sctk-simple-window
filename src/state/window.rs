@@ -1,5 +1,3 @@
-use std::i32;
-
 use smithay_client_toolkit::{
     delegate_xdg_shell, delegate_xdg_window,
     shell::{xdg::window::WindowHandler, WaylandSurface},
@@ -39,7 +37,7 @@ impl WindowHandler for GfState {
 }
 
 impl GfState {
-    fn draw(&mut self) {
+    pub fn draw(&mut self) {
         let width = self.width as i32;
         let height = self.height as i32;
         let stride = width * 4;
@@ -64,6 +62,12 @@ impl GfState {
         buffer
             .attach_to(self.window().wl_surface())
             .expect("Attaching Buffer failed.");
+        self.window()
+            .wl_surface()
+            .damage_buffer(0, 0, width, height);
+        self.window()
+            .wl_surface()
+            .frame(&self.queue_handle, self.window().wl_surface().clone());
         self.window().commit();
     }
 }

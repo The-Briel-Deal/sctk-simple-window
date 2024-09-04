@@ -3,8 +3,6 @@ use wayland_client::Connection;
 
 use super::GfState;
 
-
-
 impl CompositorHandler for GfState {
     fn frame(
         &mut self,

@@ -1,3 +1,5 @@
+use std::usize;
+
 use wayland_client::protocol::wl_shm::Format;
 
 use crate::helper::position::Position;
@@ -29,8 +31,20 @@ impl Game for Snake {
             .chunks_exact_mut(4)
             .enumerate()
             .for_each(|(chunk_index, chunk)| {
+                let pos = Position {
+                    x: (chunk_index % width as usize) as u32,
+                    y: (chunk_index / width as usize) as u32,
+                };
                 chunk.iter_mut().enumerate().for_each(|(byte_index, byte)| {
-                    *byte = 0xFF;
+                    if byte_index == 3 { // Always set alpha byte to 255
+                        *byte = 0xFF;
+                        return;
+                    }
+                    if pos.near(&center, 30) {
+                        *byte = 0xFF;
+                    } else {
+                        *byte = 0x00;
+                    }
                 })
             })
     }

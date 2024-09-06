@@ -28,6 +28,8 @@ use wayland_client::{
     Connection, EventQueue, QueueHandle,
 };
 
+use crate::snake::{Game, Snake};
+
 pub struct GfState {
     queue_handle: QueueHandle<Self>,
 
@@ -44,6 +46,8 @@ pub struct GfState {
     first_configure: bool,
     width: u32,
     height: u32,
+
+    game: Box<dyn Game>,
 }
 
 impl GfState {
@@ -73,6 +77,8 @@ impl GfState {
             first_configure: true,
             height: 256,
             width: 256,
+
+            game: Box::new(Snake::new()),
         }
     }
     pub fn init_window(&mut self, title: &str, app_id: &str, min_size: (u32, u32)) {
@@ -106,11 +112,8 @@ impl GfState {
     pub fn window(&self) -> &Window {
         match self.window.as_ref() {
             Some(window) => window,
-            None => panic!("No window in state. Have you called `init_window()`?")
-
-
+            None => panic!("No window in state. Have you called `init_window()`?"),
         }
-
     }
 }
 

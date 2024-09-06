@@ -40,13 +40,14 @@ impl WindowHandler for GfState {
 
 impl GfState {
     pub fn draw(&mut self) {
-        let width = self.width as i32;
-        let height = self.height as i32;
+        let width = self.width;
+        let height = self.height;
         let stride = width * 4;
+        let format = wl_shm::Format::Argb8888;
         self.buffer =
             match self
                 .slot_pool()
-                .create_buffer(width, height, stride, wl_shm::Format::Argb8888)
+                .create_buffer(width as i32, height as i32, stride as i32, format)
             {
                 Ok(buffer) => Some(buffer.0),
                 Err(err) => panic!("Failed to create buffer.\nErr: {err}"),
@@ -56,23 +57,14 @@ impl GfState {
         // TODO: Create a fallback for this.
         let canvas = pool.canvas(buffer).expect("Getting Canvas Failed.");
 
-        let rand_num: i64 = rand::random();
-        canvas
-            .chunks_exact_mut(4)
-            .enumerate()
-            .for_each(|(index, chunk)| {
-                let pix = (rand_num % (index + 1) as i64) % 255;
-                chunk[0] = 0xFF;
-                chunk[1] = pix as u8;
-                chunk[2] = 0xFF;
-                chunk[3] = 0xFF;
-            });
+        self.game.draw(width, height, format, canvas);
+
         buffer
             .attach_to(self.window().wl_surface())
             .expect("Attaching Buffer failed.");
         self.window()
             .wl_surface()
-            .damage_buffer(0, 0, width, height);
+            .damage_buffer(0, 0, width as i32, height as i32);
         self.window()
             .wl_surface()
             .frame(&self.queue_handle, self.window().wl_surface().clone());
